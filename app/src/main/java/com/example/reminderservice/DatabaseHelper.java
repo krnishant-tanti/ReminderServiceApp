@@ -60,7 +60,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // Select All Query
         String selectQuery = "SELECT  * FROM " + ReminderDB.TABLE_NAME + " ORDER BY " +
-                ReminderDB.COLUMN_TIMESTAMP + " DESC";
+                ReminderDB.COLUMN_TIMESTAMP + " ASC";
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);

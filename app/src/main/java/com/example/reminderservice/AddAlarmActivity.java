@@ -15,11 +15,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -36,8 +37,9 @@ import java.util.Locale;
 
 import static android.content.ContentValues.TAG;
 
-public class AddAlarmActivity extends AppCompatActivity {
+public class AddAlarmActivity extends Activity {
     private int notificationId = 1;
+    String[] resultArr;
     private static final int MY_PERMISSIONS_REQUEST_SEND_SMS =0 ;
     private boolean updateReminder = false;
     private List<ReminderDB> reminderList = new ArrayList<>();
@@ -60,6 +62,20 @@ public class AddAlarmActivity extends AppCompatActivity {
         oldTime = getIntent().getStringExtra("oldTime");
         oldText = getIntent().getStringExtra("oldText");
         reminderPositon = (int) getIntent().getIntExtra("position",0);
+
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle != null){
+            ListView lv = (ListView) findViewById(R.id.selectedContactList);
+            resultArr = bundle.getStringArray("selectedItems");
+//            Log.d("FFFFFFFFFFGGGGGGGGGGGGGGG","FGGGG"+resultArr[0]);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(AddAlarmActivity.this,
+                    android.R.layout.simple_list_item_1, resultArr);
+            lv.setAdapter(adapter);
+        }
+
+        if(!checkPermission()){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS,Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_CONTACTS}, MY_PERMISSIONS_REQUEST_SEND_SMS);
+        }
 
         if(oldDate != null && oldTime != null && oldText != null ){
             date = oldDate;
@@ -84,12 +100,25 @@ public class AddAlarmActivity extends AppCompatActivity {
         btnDatePicker = (LinearLayout) findViewById(R.id.dateLinear);
         btnTimePicker = (LinearLayout) findViewById(R.id.timeLinear);
         editText = findViewById(R.id.editTask);
-        phoneNoText = findViewById(R.id.editTask);
+//        phoneNoText = findViewById(R.id.phoneTxt);
         editText.setText(oldText);
         txtDate = (TextView) findViewById(R.id.in_date);
         txtDate.setText(date);
         txtTime = (TextView) findViewById(R.id.in_time);
         txtTime.setText(curTime);
+        FloatingActionButton conBtn= (FloatingActionButton) findViewById(R.id.contactBtn);
+
+        conBtn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+//                startActivityForResult(new Intent(AddAlarmActivity.this,ContactListActivity.class), REQUEST_CODE);
+                Intent viewIntent = new Intent(AddAlarmActivity.this, ContactListActivity.class);
+                viewIntent.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+                startActivity(viewIntent);
+                finish();
+            }
+
+        });
 
         btnDatePicker.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -155,7 +184,7 @@ public class AddAlarmActivity extends AppCompatActivity {
                 message = editText.getText().toString();
                 String inputdate = dateFormat(txtDate.getText().toString());
                 String inputTime = timeFormat(txtTime.getText().toString());
-                phoneNo = phoneNoText.getText().toString();
+//                phoneNo = phoneNoText.getText().toString();
 
                 if (message.length() != 0 && inputTime.length() != 0) {
 
@@ -173,10 +202,27 @@ public class AddAlarmActivity extends AppCompatActivity {
                             AddData(message, Long.toString(selectedTimeStamp));
                             setAlarmNotification();
                         }
-                        if (phoneNo.length() != 0) {
-                            phoneNo = "0"+phoneNo;
+                        if (resultArr.length > 0 && checkPermission()) {
+
                             mMessage = "You have a reminder on " + inputdate + " at " + inputTime + " with a text message '" + message + "'";
-                            sendSMSMessage();
+                            for (int i= 0 ;i<resultArr.length;i++ ){
+                                boolean validNumber = false;
+                                String conDetails[] = resultArr[i].split(System.getProperty("line.separator"));
+                                if(conDetails[1].length() > 10){
+                                    phoneNo = "+91"+conDetails[1].substring(conDetails[1].length() - 10);
+                                    validNumber = true;
+                                }else if (conDetails[1].length() == 10){
+                                    phoneNo = "+91"+ conDetails[1];
+                                    validNumber = true;
+                                }
+
+                                if(validNumber){
+                                    SmsManager smsManager = SmsManager.getDefault();
+                                    smsManager.sendTextMessage(phoneNo, null, mMessage, null, null);
+                                }
+                                Log.i("FFFFFFFFF",phoneNo);
+                            }
+
                         }
                         editText.setText("");
                     }
@@ -282,37 +328,32 @@ public class AddAlarmActivity extends AppCompatActivity {
         reminderList.set(position, n);
     }
 
-    protected void sendSMSMessage() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.SEND_SMS)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.SEND_SMS)) {
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.SEND_SMS},
-                        MY_PERMISSIONS_REQUEST_SEND_SMS);
-            }
-        }
+    public boolean checkPermission() {
+        int smsPermission = ContextCompat.checkSelfPermission(this,Manifest.permission.SEND_SMS);
+        int phonePermission = ContextCompat.checkSelfPermission(this,Manifest.permission.READ_PHONE_STATE);
+        int contactPermission = ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CONTACTS);
+        return (smsPermission == PackageManager.PERMISSION_GRANTED ) && (phonePermission == PackageManager.PERMISSION_GRANTED) && (contactPermission == PackageManager.PERMISSION_GRANTED);
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults) {
+
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_SEND_SMS: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    SmsManager smsManager = SmsManager.getDefault();
-                    smsManager.sendTextMessage(phoneNo, null, mMessage, null, null);
-                    Toast.makeText(getApplicationContext(), "SMS sent.",
-                            Toast.LENGTH_LONG).show();
+            case MY_PERMISSIONS_REQUEST_SEND_SMS:
+                if (grantResults.length > 0 && (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED && grantResults[2] == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(getApplicationContext(), "Permission Granted",Toast.LENGTH_LONG).show();
+
                 } else {
                     Toast.makeText(getApplicationContext(),
                             "SMS faild, please try again.", Toast.LENGTH_LONG).show();
-                    return;
                 }
-            }
+                break;
         }
 
     }
 
+    @Override
+    public Intent getIntent() {
+        return super.getIntent();
+    }
 }

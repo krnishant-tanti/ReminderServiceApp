@@ -86,44 +86,34 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/phoneLinear"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_below="@+id/timeLinear"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="35dp">
-
-
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="Phone Number"
-            android:inputType="phone"
-            android:maxLength="10"/>
-
+        android:layout_marginTop="35dp"
+        >
+        <ListView
+            android:id="@+id/selectedContactList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </LinearLayout>
 
-    <!--<LinearLayout-->
-        <!--android:id="@+id/buttonLinear"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:orientation="horizontal"-->
-        <!--android:layout_below="@+id/phoneLinear"-->
-        <!--android:layout_centerHorizontal="true"-->
-        <!--android:layout_marginTop="35dp">-->
-
-
-
-        <!--<Button-->
-            <!--android:id="@+id/cancelBtn"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:text="Cancel" />-->
-
-    <!--</LinearLayout>-->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/contactBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="110dp"
+        android:layout_weight="1"
+        android:clickable="true"
+        android:src="@drawable/ic_add_contact"
+        android:tint="@android:color/background_light"
+        app:backgroundTint="@color/colorPrimaryDark"
+        app:fabSize="normal"
+        app:showMotionSpec="@android:anim/cycle_interpolator" />
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/setBtn"
         android:layout_width="wrap_content"
